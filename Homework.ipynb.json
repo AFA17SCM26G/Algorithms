@@ -1,0 +1,1935 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": 115,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "----------------------------------------------------------------------------------------------------\n",
+      "                     ***************CS-584******************\n",
+      "                     ***************HOMEWORK****************\n",
+      "                     Team Members:\n",
+      "                     Anvesh Gangasani (A20369026)\n",
+      "                     Saibabu Chandramouli (A20345775)\n",
+      "                     Chiranjeevi Ankamreddy (A20359837)\n",
+      "----------------------------------------------------------------------------------------------------\n"
+     ]
+    }
+   ],
+   "source": [
+    "print(100*'-')\n",
+    "print(20*' ',\"***************CS-584******************\")\n",
+    "print(20*' ',\"***************HOMEWORK****************\")\n",
+    "print(20*' ',\"Team Members:\")\n",
+    "print(20*' ',\"Anvesh Gangasani (A20369026)\")\n",
+    "print(20*' ',\"Saibabu Chandramouli (A20345775)\")\n",
+    "print(20*' ',\"Chiranjeevi Ankamreddy (A20359837)\")\n",
+    "print(100*'-')\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 29,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "import pandas as pd\n",
+    "from sklearn import tree\n",
+    "from IPython.display import Image\n",
+    "import numpy as np\n",
+    "from sklearn.cross_validation import  cross_val_score\n",
+    "from sklearn.metrics import accuracy_score\n",
+    "from sklearn.cross_validation import KFold"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 30,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Positives instances in DataSet is 62.7195183141 %\n",
+      "Negitives instances in DataSet is 37.2804816859 %\n"
+     ]
+    }
+   ],
+   "source": [
+    "#1) Decision Trees\n",
+    "\n",
+    "#read given training dataset into dataframe\n",
+    "data_input = pd.read_csv('/Users/ani/Desktop/ML/Homework_Project/Crime Prediction Data 2/communities-crime-clean.csv')\n",
+    "data_frame = pd.DataFrame(data_input)\n",
+    "\n",
+    "#1.a\n",
+    "#New field HighCrime where voilentCrimePerPop is Greater than 0.1\n",
+    "data_frame['HighCrime'] = np.where(data_frame['ViolentCrimesPerPop'] > 0.1,True,False)\n",
+    "#count number of positives and negitives\n",
+    "positive_negitive_counts = data_frame['HighCrime'].value_counts()\n",
+    "positive_counts = positive_negitive_counts[True]\n",
+    "negitive_counts = positive_negitive_counts[False]\n",
+    "\n",
+    "#count all number of columns\n",
+    "total_counts = data_frame.HighCrime.count()\n",
+    "\n",
+    "positive_perc = positive_counts/total_counts\n",
+    "negitive_perc = negitive_counts/total_counts\n",
+    "\n",
+    "print('Positives instances in DataSet is',positive_perc*100,'%')\n",
+    "print('Negitives instances in DataSet is',negitive_perc*100,'%')\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 31,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "from sklearn.cross_validation import train_test_split\n",
+    "#method to split data data randomly based on features given\n",
+    "#input: X(Set of features), y(class features)\n",
+    "#output: X_train(train features),y_train(train class),X_eval(testing features),y_eval(test_class)\n",
+    "def split_data_randomly(X,y):\n",
+    "    #split train and test data randomly to calculate accuracy, precistion and recall\n",
+    "    X_train, X_eval, y_train, y_eval = train_test_split( X, y, test_size=0.20, random_state=1 )\n",
+    "    return X_train, X_eval, y_train, y_eval\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 32,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "#best features for clean dataset\n",
+    "def find_best_features(data_input,list_a):\n",
+    "    header_list = list(data_input)\n",
+    "    feature_dict = {}\n",
+    "    for i in range(0,len(list_a)):\n",
+    "        feature_dict[list_a[i]] = i\n",
+    "    feature_sorted_values = sorted(feature_dict.keys(),reverse=True)\n",
+    "    count = 0\n",
+    "    index_list = []\n",
+    "    for each in feature_sorted_values:\n",
+    "        if count == 10:\n",
+    "            break;\n",
+    "        count += 1\n",
+    "        index_list.append(header_list[feature_dict[each]+3])\n",
+    "    print(index_list)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 33,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "#method  to train and give accuracy precision recall values based on the input features and output class given\n",
+    "def Decision_Tree_classfier(X,y):\n",
+    "    #define a tree classifier\n",
+    "    clf = tree.DecisionTreeClassifier()\n",
+    "    #get X_train, y_train, X_eval, y_eval from split_data_randomly function\n",
+    "    X_train, X_eval, y_train, y_eval = split_data_randomly( X, y)\n",
+    "    #fit data to DecisionTree classifier\n",
+    "    clf.fit(X_train,y_train.astype(int))\n",
+    "    find_accuracy(X_train,X_eval,y_train,y_eval,clf)\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 34,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "#function to find accuracy and metrics of the model\n",
+    "\n",
+    "from sklearn.metrics import accuracy_score\n",
+    "from sklearn import metrics\n",
+    "from sklearn.metrics import precision_recall_fscore_support\n",
+    "\n",
+    "def find_accuracy(X_train,X_eval,y_train,y_eval,clf):\n",
+    "    y_pred = clf.predict(X_eval)\n",
+    "    print('Cross val score: ',cross_val_score(clf, X_train, y_train.astype(int), cv=10),\"\\n\")\n",
+    "    print('Accuracy is :: \\n')\n",
+    "    print(metrics.accuracy_score(y_eval.astype(int), y_pred.astype(int)),\"\\n\")\n",
+    "    print('\\n Confusion Matrix is:\\n')\n",
+    "    print(metrics.confusion_matrix(y_eval.astype(int), y_pred.astype(int)),\"\\n\")\n",
+    "    print('\\n Classification report is:\\n')\n",
+    "    print(metrics.classification_report(y_eval.astype(int), y_pred.astype(int)),\"\\n\")\n",
+    "    \n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 35,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Cross val score:  [ 0.7125      0.73125     0.73125     0.71875     0.7625      0.7875\n",
+      "  0.79375     0.77848101  0.81012658  0.74683544] \n",
+      "\n",
+      "Accuracy is :: \n",
+      "\n",
+      "0.724310776942 \n",
+      "\n",
+      "\n",
+      " Confusion Matrix is:\n",
+      "\n",
+      "[[ 97  59]\n",
+      " [ 51 192]] \n",
+      "\n",
+      "\n",
+      " Classification report is:\n",
+      "\n",
+      "             precision    recall  f1-score   support\n",
+      "\n",
+      "          0       0.66      0.62      0.64       156\n",
+      "          1       0.76      0.79      0.78       243\n",
+      "\n",
+      "avg / total       0.72      0.72      0.72       399\n",
+      " \n",
+      "\n"
+     ]
+    }
+   ],
+   "source": [
+    "#1->b->1\n",
+    "\n",
+    "#get values ndarray form dataframe\n",
+    "train_data_clean = data_frame.values\n",
+    "train_data = train_data_clean.copy()\n",
+    "#Split features into input and output\n",
+    "#X: features 0,1,2 are non deterministic features, X is features from 3 to 102\n",
+    "#(bcs 103 is ViolentCrimesperPop so exculed that column from both X and y)\n",
+    "X = train_data_clean[:,3:102]\n",
+    "#y: Decision class is HighCrimeRate we have created during 1.a\n",
+    "y = train_data_clean[:,104]\n",
+    "#calling Decision classifier function to get Accuracy,Precision and Recall of the model\n",
+    "Decision_Tree_classfier(X,y)\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 36,
+   "metadata": {
+    "collapsed": false,
+    "scrolled": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Metrics for Univariate feature selection\n",
+      "\n",
+      "Cross val score:  [ 0.74375     0.78125     0.7         0.75625     0.79375     0.76875\n",
+      "  0.75625     0.79746835  0.80379747  0.75949367] \n",
+      "\n",
+      "Accuracy is :: \n",
+      "\n",
+      "0.74686716792 \n",
+      "\n",
+      "\n",
+      " Confusion Matrix is:\n",
+      "\n",
+      "[[ 97  59]\n",
+      " [ 42 201]] \n",
+      "\n",
+      "\n",
+      " Classification report is:\n",
+      "\n",
+      "             precision    recall  f1-score   support\n",
+      "\n",
+      "          0       0.70      0.62      0.66       156\n",
+      "          1       0.77      0.83      0.80       243\n",
+      "\n",
+      "avg / total       0.74      0.75      0.74       399\n",
+      " \n",
+      "\n",
+      "Metrics for Recursive feature elimination feature selection\n",
+      "\n",
+      "Cross val score:  [ 0.74375     0.76875     0.7875      0.78125     0.74375     0.75625     0.75\n",
+      "  0.75316456  0.74683544  0.78481013] \n",
+      "\n",
+      "Accuracy is :: \n",
+      "\n",
+      "0.754385964912 \n",
+      "\n",
+      "\n",
+      " Confusion Matrix is:\n",
+      "\n",
+      "[[104  52]\n",
+      " [ 46 197]] \n",
+      "\n",
+      "\n",
+      " Classification report is:\n",
+      "\n",
+      "             precision    recall  f1-score   support\n",
+      "\n",
+      "          0       0.69      0.67      0.68       156\n",
+      "          1       0.79      0.81      0.80       243\n",
+      "\n",
+      "avg / total       0.75      0.75      0.75       399\n",
+      " \n",
+      "\n",
+      "Metrics for Principal Component Analysis feature selection\n",
+      "\n",
+      "Cross val score:  [ 0.65625     0.74375     0.725       0.7625      0.7125      0.725\n",
+      "  0.78125     0.76582278  0.79113924  0.67721519] \n",
+      "\n",
+      "Accuracy is :: \n",
+      "\n",
+      "0.709273182957 \n",
+      "\n",
+      "\n",
+      " Confusion Matrix is:\n",
+      "\n",
+      "[[ 97  59]\n",
+      " [ 57 186]] \n",
+      "\n",
+      "\n",
+      " Classification report is:\n",
+      "\n",
+      "             precision    recall  f1-score   support\n",
+      "\n",
+      "          0       0.63      0.62      0.63       156\n",
+      "          1       0.76      0.77      0.76       243\n",
+      "\n",
+      "avg / total       0.71      0.71      0.71       399\n",
+      " \n",
+      "\n",
+      "Metrics for Feature Importance feature selection\n",
+      "\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "//anaconda/lib/python3.5/site-packages/sklearn/utils/__init__.py:93: DeprecationWarning: Function transform is deprecated; Support to use estimators as feature selectors will be removed in version 0.19. Use SelectFromModel instead.\n",
+      "  warnings.warn(msg, category=DeprecationWarning)\n"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Cross val score:  [ 0.74375     0.80625     0.74375     0.75        0.775       0.775       0.775\n",
+      "  0.79746835  0.7721519   0.75949367] \n",
+      "\n",
+      "Accuracy is :: \n",
+      "\n",
+      "0.754385964912 \n",
+      "\n",
+      "\n",
+      " Confusion Matrix is:\n",
+      "\n",
+      "[[ 99  57]\n",
+      " [ 41 202]] \n",
+      "\n",
+      "\n",
+      " Classification report is:\n",
+      "\n",
+      "             precision    recall  f1-score   support\n",
+      "\n",
+      "          0       0.71      0.63      0.67       156\n",
+      "          1       0.78      0.83      0.80       243\n",
+      "\n",
+      "avg / total       0.75      0.75      0.75       399\n",
+      " \n",
+      "\n",
+      "Most predictible features for Univariate feature selection: \n",
+      "\n",
+      "['racepctblack', 'PctIlleg', 'PctHousNoPhone', 'PctPersDenseHous', 'racePctHisp', 'pctWPubAsst', 'PctPopUnderPov', 'MedNumBR', 'PctNotSpeakEnglWell', 'PctKids2Par']\n",
+      "\n",
+      "Most predictible features for  Recursive Feature Elimination feature selection: \n",
+      "\n",
+      "['PctPersOwnOccup', 'PctRecImmig5', 'MedNumBR', 'PctRecImmig8', 'OwnOccLowQuart', 'RentMedian', 'MedOwnCostPctInc', 'PctRecImmig10', 'PctPopUnderPov', 'medFamInc']\n",
+      "\n",
+      "Most predictible features for  Principal Component Analysis feature selection: \n",
+      "\n",
+      "['PctSpeakEnglOnly', 'racePctWhite', 'PctHousOccup', 'pctUrban', 'PctYoungKids2Par', 'PctSameState85', 'PctSameCity85', 'PctKids2Par', 'PctFam2Par', 'PctBornSameState']\n",
+      "\n",
+      "Most predictible features for  Feature Importance feature selection: \n",
+      "\n",
+      "['racepctblack', 'PctKids2Par', 'PctFam2Par', 'PctYoungKids2Par', 'PctIlleg', 'TotalPctDiv', 'pctWPubAsst', 'racePctHisp', 'pctWInvInc', 'FemalePctDiv']\n"
+     ]
+    }
+   ],
+   "source": [
+    "#1->b->2\n",
+    "#feature selection methods \n",
+    "#there are 4 different feature selection methods we have tried\n",
+    "#  a)univariate selection\n",
+    "#  b)Recursive Feature Elimination\n",
+    "#  c)Principal Component Analysis\n",
+    "#  d)Feature Importance\n",
+    "\n",
+    "#below are accuracy,precision and recall when we use different feature selection methods\n",
+    "\n",
+    "\n",
+    "\n",
+    "# a)univariate selection\n",
+    "from sklearn.feature_selection import SelectKBest\n",
+    "from sklearn.feature_selection import chi2\n",
+    "#extract features\n",
+    "univariate_clf = SelectKBest(score_func=chi2)\n",
+    "fit = univariate_clf.fit(X,y.astype(int))\n",
+    "#np.set_printoptions(precision=3)\n",
+    "X_chi2 = fit.transform(X)\n",
+    "#calling Decision classifier function to get Accuracy,Precision and Recall of the model\n",
+    "print(\"Metrics for Univariate feature selection\\n\")\n",
+    "Decision_Tree_classfier(X_chi2,y)\n",
+    "\n",
+    "\n",
+    "\n",
+    "# b)Recursive Feature Elimination\n",
+    "from sklearn.feature_selection import RFE\n",
+    "from sklearn.linear_model import LogisticRegression\n",
+    "rfe = LogisticRegression()\n",
+    "rfe_clf = RFE(rfe, 3)\n",
+    "fit = rfe_clf.fit(X, y.astype(int))\n",
+    "X_rfe = fit.transform(X)\n",
+    "print(\"Metrics for Recursive feature elimination feature selection\\n\")\n",
+    "Decision_Tree_classfier(X_rfe,y)\n",
+    "\n",
+    "\n",
+    "# c)Principal Component Analysis\n",
+    "from sklearn.decomposition import PCA\n",
+    "pca = PCA(n_components=3)\n",
+    "fit = pca.fit(X,y.astype(int))\n",
+    "X_pca = fit.transform(X)\n",
+    "print(\"Metrics for Principal Component Analysis feature selection\\n\")\n",
+    "Decision_Tree_classfier(X_pca,y)\n",
+    "\n",
+    "\n",
+    "\n",
+    "# d)Feature Importance\n",
+    "from sklearn.ensemble import ExtraTreesClassifier\n",
+    "fi = ExtraTreesClassifier()\n",
+    "fi_clf = fi.fit(X, y.astype(int))\n",
+    "X_fi = fi_clf.transform(X) \n",
+    "print(\"Metrics for Feature Importance feature selection\\n\")\n",
+    "Decision_Tree_classfier(X_fi,y)\n",
+    "\n",
+    "\n",
+    "# 10 most predictive features when apply feature selection \n",
+    "print('Most predictible features for Univariate feature selection: \\n')\n",
+    "# a)univariate selection\n",
+    "list_a = univariate_clf.scores_\n",
+    "find_best_features(data_input,list_a)\n",
+    "print('\\nMost predictible features for  Recursive Feature Elimination feature selection: \\n')\n",
+    "# b)Recursive Feature Elimination\n",
+    "list_a = rfe_clf.ranking_\n",
+    "find_best_features(data_input,list_a)\n",
+    "print('\\nMost predictible features for  Principal Component Analysis feature selection: \\n')\n",
+    "# c)Principal Component Analysis\n",
+    "list_a = pca.mean_\n",
+    "find_best_features(data_input,list_a)\n",
+    "print('\\nMost predictible features for  Feature Importance feature selection: \\n')\n",
+    "# d)Feature Importance\n",
+    "list_a = fi_clf.feature_importances_#rfe_clf.support_vectors_\n",
+    "find_best_features(data_input,list_a)\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 37,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "#method cross_val_split will devide the data into X_CV_train, X_CV_eval, y_CV_train, y_CV_eval\n",
+    "def cross_val_split_2(train_data_clean):\n",
+    "    cv = KFold(n=len(train_data_clean),  \n",
+    "           n_folds=10) \n",
+    "    fold_accuracy = []\n",
+    "    for train_fold, valid_fold in cv:\n",
+    "        train = train_data_clean[train_fold] # Extract train data with cv indices\n",
+    "        valid = train_data_clean[valid_fold] # Extract valid data with cv indices\n",
+    "        #X: features 0,1,2 are non deterministic features, X is features from 3 to 102\n",
+    "        #(bcs 103 is ViolentCrimesperPop so exculed that column from both X and y)\n",
+    "        X_CV_train=train[:,3:102]\n",
+    "        y_CV_train=train[:,104]\n",
+    "        X_CV_eval=valid[:,3:102]\n",
+    "        y_CV_eval=valid[:,104]\n",
+    "    return X_CV_train,X_CV_eval,y_CV_train,y_CV_eval"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 38,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "#method find_accuracy_CV will provide the accuracy of each fold and finally provide the average accuracy,Confusion matrix and \n",
+    "\n",
+    "def find_accuracy_CV(X_train,X_eval,y_train,y_eval,clf):\n",
+    "    acc = 0.0\n",
+    "    y_pred = clf.predict(X_eval)\n",
+    "    print('Cross val score: ',cross_val_score(clf, X_train, y_train.astype(int), cv=10),\"\\n\")\n",
+    "    print('Accuracy is :: \\n')\n",
+    "    acc = metrics.accuracy_score(y_eval.astype(int), y_pred.astype(int))\n",
+    "    print(acc,\"\\n\")\n",
+    "    print('\\n Confusion Matrix is:\\n')\n",
+    "    print(metrics.confusion_matrix(y_eval.astype(int), y_pred.astype(int)),\"\\n\")\n",
+    "    print('\\n Classification report is:\\n')\n",
+    "    print(metrics.classification_report(y_eval.astype(int), y_pred.astype(int)),\"\\n\")   \n",
+    "    return acc\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 39,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Cross val score:  [ 0.73333333  0.78888889  0.82777778  0.70555556  0.72777778  0.6\n",
+      "  0.72625698  0.73743017  0.66292135  0.76966292] \n",
+      "\n",
+      "Accuracy is :: \n",
+      "\n",
+      "0.718592964824 \n",
+      "\n",
+      "\n",
+      " Confusion Matrix is:\n",
+      "\n",
+      "[[70 37]\n",
+      " [19 73]] \n",
+      "\n",
+      "\n",
+      " Classification report is:\n",
+      "\n",
+      "             precision    recall  f1-score   support\n",
+      "\n",
+      "          0       0.79      0.65      0.71       107\n",
+      "          1       0.66      0.79      0.72        92\n",
+      "\n",
+      "avg / total       0.73      0.72      0.72       199\n",
+      " \n",
+      "\n"
+     ]
+    }
+   ],
+   "source": [
+    "#1->c->1\n",
+    "X_CV_train,X_CV_eval,y_CV_train,y_CV_eval = cross_val_split_2(train_data_clean)\n",
+    "#Decision_Tree_classfier(X_CV_train,y_CV_train.astype(int))\n",
+    "d_tree = tree.DecisionTreeClassifier()\n",
+    "d_tree.fit(X_CV_train,y_CV_train.astype(int))\n",
+    "DT_acc = find_accuracy_CV(X_CV_train,X_CV_eval,y_CV_train,y_CV_eval,d_tree)\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 40,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "def find_accuracy_2(X_train,X_eval,y_train,y_eval,clf):    \n",
+    "    y_pred = clf.predict(X_eval)\n",
+    "    #print(metrics.accuracy_score(y_eval.astype(int), y_pred.astype(int)),\"\\n\")    \n",
+    "    return metrics.accuracy_score(y_eval.astype(int), y_pred.astype(int))\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 41,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Cross val score:  [ 0.76666667  0.81666667  0.79444444  0.8         0.76111111  0.58333333\n",
+      "  0.70949721  0.80446927  0.75280899  0.81460674] \n",
+      "\n",
+      "Accuracy is :: \n",
+      "\n",
+      "0.743718592965 \n",
+      "\n",
+      "\n",
+      " Confusion Matrix is:\n",
+      "\n",
+      "[[82 25]\n",
+      " [26 66]] \n",
+      "\n",
+      "\n",
+      " Classification report is:\n",
+      "\n",
+      "             precision    recall  f1-score   support\n",
+      "\n",
+      "          0       0.76      0.77      0.76       107\n",
+      "          1       0.73      0.72      0.72        92\n",
+      "\n",
+      "avg / total       0.74      0.74      0.74       199\n",
+      " \n",
+      "\n"
+     ]
+    }
+   ],
+   "source": [
+    "#2->a->1 Linear Classification\n",
+    "from sklearn.naive_bayes import GaussianNB\n",
+    "#Gaussian_clf.fit(X_CV_train, y_CV_train)\n",
+    "X_CV_train,X_CV_eval,y_CV_train,y_CV_eval = cross_val_split_2(train_data_clean)\n",
+    "Gaussian_clf = GaussianNB()\n",
+    "Gaussian_clf.fit(X_CV_train,y_CV_train.astype(int))\n",
+    "GNB_acc = find_accuracy_CV(X_CV_train,X_CV_eval,y_CV_train,y_CV_eval,Gaussian_clf)\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 42,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      " Most Predictive features with Gaussian NB \n",
+      "\n",
+      "PctLargHouseOccup\n",
+      "PctVacMore6Mos\n",
+      "agePct12t21\n",
+      "PctUsePubTrans\n",
+      "PctWorkMom\n",
+      "PopDens\n",
+      "PctWorkMomYoungKids\n",
+      "PctTeen2Par\n",
+      "NumIlleg\n",
+      "PctSameState85\n"
+     ]
+    }
+   ],
+   "source": [
+    "# 2->a->2\n",
+    "import math\n",
+    "feature_dict = {}\n",
+    "for i in range(3,102):\n",
+    "    ar = train_data_clean[:,i]\n",
+    "    true_count = 0\n",
+    "    true_values = []\n",
+    "    false_count = 0\n",
+    "    false_values = []\n",
+    "    for each in ar:\n",
+    "        if each > 0.1:\n",
+    "            true_count += 1\n",
+    "            true_values.append(each)\n",
+    "        else:\n",
+    "            false_count +=1\n",
+    "            false_values.append(each)\n",
+    "    mean_ture = true_count/len(ar)\n",
+    "    mean_false = false_count/len(ar)\n",
+    "    true_sd = 0\n",
+    "    false_sd = 0\n",
+    "    for each in true_values:\n",
+    "        true_sd = true_sd + ((each - mean_ture) * (each - mean_ture))\n",
+    "    for each in false_values:\n",
+    "        false_sd = false_sd + ((each - mean_false) * (each - mean_false))\n",
+    "    true_sd = math.sqrt(true_sd/true_count)\n",
+    "    false_sd = math.sqrt(false_sd/false_count)\n",
+    "    predict_value = abs(mean_ture-mean_false)/(true_sd+false_sd)\n",
+    "    feature_dict[predict_value] = i\n",
+    "\n",
+    "arr = sorted(feature_dict.keys(),reverse=True)\n",
+    "count = 0\n",
+    "index_list = []\n",
+    "for each in arr:\n",
+    "    if count == 10:\n",
+    "        break\n",
+    "    count += 1\n",
+    "    #print(feature_dict[each])\n",
+    "    index_list.append(feature_dict[each])\n",
+    "header_list = list(data_input)\n",
+    "print('\\n Most Predictive features with Gaussian NB \\n')\n",
+    "for each in index_list:\n",
+    "    print(header_list[each+3])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 43,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "For Decision Tree Accuracy is :: 0.718592964824\n",
+      "For Guassian NB Accuracy is :: 0.743718592965\n",
+      "Therefore Gaussian NB has Higher Accuracy than Decision Tree\n"
+     ]
+    }
+   ],
+   "source": [
+    "#2->1->3\n",
+    "print('\\nFor Decision Tree Accuracy is ::', DT_acc)\n",
+    "print('For Guassian NB Accuracy is ::', GNB_acc)\n",
+    "print('Therefore Gaussian NB has Higher Accuracy than Decision Tree')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 50,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "def cross_val_split(clf,train_data_clean):\n",
+    "    cv = KFold(n=len(train_data_clean),  \n",
+    "           n_folds=10) \n",
+    "    fold_accuracy = []\n",
+    "    for train_fold, valid_fold in cv:\n",
+    "        train = train_data_clean[train_fold] # Extract train data with cv indices\n",
+    "        valid = train_data_clean[valid_fold] # Extract valid data with cv indices\n",
+    "        X_CV_train=train[:,3:103]\n",
+    "        y_CV_train=train[:,104]\n",
+    "        X_CV_eval=valid[:,3:103]\n",
+    "        y_CV_eval=valid[:,104]\n",
+    "        model = clf.fit(X = X_CV_train, y = y_CV_train.astype(int))\n",
+    "        valid_acc = model.score(X = X_CV_eval, \n",
+    "                                y = y_CV_eval.astype(int))\n",
+    "        fold_accuracy.append(valid_acc)    \n",
+    "        find_accuracy(X_CV_train,X_CV_eval,y_CV_train,y_CV_eval,clf)\n",
+    "    #print(\"Accuracy per fold: \", fold_accuracy, \"\\n\")\n",
+    "    print(\"Average accuracy: \", sum(fold_accuracy)/len(fold_accuracy))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 51,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Cross val score:  [ 0.75555556  0.88888889  0.85        0.81111111  0.75        0.62777778\n",
+      "  0.69832402  0.83798883  0.85955056  0.83707865] \n",
+      "\n",
+      "Accuracy is :: \n",
+      "\n",
+      "0.809045226131 \n",
+      "\n",
+      "\n",
+      " Confusion Matrix is:\n",
+      "\n",
+      "[[79 28]\n",
+      " [10 82]] \n",
+      "\n",
+      "\n",
+      " Classification report is:\n",
+      "\n",
+      "             precision    recall  f1-score   support\n",
+      "\n",
+      "          0       0.89      0.74      0.81       107\n",
+      "          1       0.75      0.89      0.81        92\n",
+      "\n",
+      "avg / total       0.82      0.81      0.81       199\n",
+      " \n",
+      "\n"
+     ]
+    }
+   ],
+   "source": [
+    "#2->b->1\n",
+    "\n",
+    "#Linear SVC\n",
+    "from sklearn.svm import SVC\n",
+    "\n",
+    "X_CV_train,X_CV_eval,y_CV_train,y_CV_eval = cross_val_split_2(train_data_clean)\n",
+    "SVC_clf = SVC(kernel='linear')\n",
+    "SVC_clf.fit(X_CV_train,y_CV_train.astype(int))\n",
+    "LinearSVC_acc = find_accuracy_CV(X_CV_train,X_CV_eval,y_CV_train,y_CV_eval,SVC_clf)\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 52,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      " Most Predictive features with Linear SVC: \n",
+      "\n",
+      "racepctblack\n",
+      "agePct12t21\n",
+      "MalePctDivorce\n",
+      "population\n",
+      "PersPerOccupHous\n",
+      "agePct65up\n",
+      "HousVacant\n",
+      "racePctHisp\n",
+      "TotalPctDiv\n",
+      "numbUrban\n"
+     ]
+    }
+   ],
+   "source": [
+    "#2->b->2\n",
+    "weights = SVC_clf.coef_[0]\n",
+    "weight_dict = {}\n",
+    "for i in range(0,len(weights)):\n",
+    "    weight_dict[weights[i]] = i\n",
+    "weight_val = sorted(weight_dict.keys(),reverse=True)\n",
+    "count = 0\n",
+    "index_list2 = []\n",
+    "for each in weight_val:\n",
+    "    if count == 10:\n",
+    "        break\n",
+    "    count += 1\n",
+    "    index_list2.append(weight_dict[each])\n",
+    "print('\\n Most Predictive features with Linear SVC: \\n')\n",
+    "for each in index_list2:\n",
+    "    print(header_list[each+3])\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 53,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "For Decision Tree Accuracy is :: 0.718592964824\n",
+      "For Linear SVC Accuracy is :: 0.809045226131\n",
+      "\n",
+      "Therefore Linear SVC has Higher Accuracy than Decision Tree\n"
+     ]
+    }
+   ],
+   "source": [
+    "#2->b->3\n",
+    "print('\\nFor Decision Tree Accuracy is ::', DT_acc)\n",
+    "print('For Linear SVC Accuracy is ::', LinearSVC_acc)\n",
+    "print('\\nTherefore Linear SVC has Higher Accuracy than Decision Tree')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 54,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "from sklearn.cross_validation import KFold\n",
+    "\n",
+    "def cross_val_split_regr(train_data_clean):\n",
+    "    cv = KFold(n=len(train_data_clean),  \n",
+    "           n_folds=10) \n",
+    "    fold_accuracy = []\n",
+    "    for train_fold, valid_fold in cv:\n",
+    "        train = train_data_clean[train_fold] # Extract train data with cv indices\n",
+    "        valid = train_data_clean[valid_fold] # Extract valid data with cv indices\n",
+    "        X_CV_train=train[:,3:102]\n",
+    "        y_CV_train=train[:,103]\n",
+    "        X_CV_eval=valid[:,3:102]\n",
+    "        y_CV_eval=valid[:,103]\n",
+    "    return X_CV_train,X_CV_eval,y_CV_train,y_CV_eval    "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 55,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Mean squared error for 10 fold cross validation : 0.04\n",
+      "Mean squared error when training set and testing set are same : 0.08\n",
+      "\n",
+      " Most predictive features: \n",
+      "\n",
+      "PctLargHouseFam\n",
+      "NumIlleg\n",
+      "PctKids2Par\n",
+      "OwnOccHiQuart\n",
+      "PctPersDenseHous\n",
+      "PctRecImmig10\n",
+      "MalePctDivorce\n",
+      "PersPerOwnOccHous\n",
+      "MalePctNevMarr\n",
+      "PersPerOccupHous\n",
+      "\n",
+      "Least predictive features: \n",
+      "\n",
+      "PctLargHouseOccup\n",
+      "population\n",
+      "PersPerFam\n",
+      "perCapInc\n",
+      "PctFam2Par\n",
+      "agePct16t24\n",
+      "OwnOccLowQuart\n",
+      "TotalPctDiv\n",
+      "PctRecImmig5\n",
+      "pctWWage\n"
+     ]
+    }
+   ],
+   "source": [
+    "#3.a.1) LinearRegression\n",
+    "\n",
+    "from sklearn import datasets, linear_model\n",
+    "\n",
+    "regr_clf = linear_model.LinearRegression()\n",
+    "X_CV_train,X_CV_eval,y_CV_train,y_CV_eval = cross_val_split_regr(train_data_clean)\n",
+    "regr_clf.fit(X = X_CV_train, y = y_CV_train.astype(int))\n",
+    "print(\"Mean squared error for 10 fold cross validation : %.2f\"\n",
+    "      % np.mean((regr_clf.predict(X_CV_eval) - y_CV_eval) ** 2))\n",
+    "    \n",
+    "#a.2) MSE on the training set (train on all the data then test on it all\n",
+    "X_regr_train = train_data[:,3:102]\n",
+    "y_regr_train = train_data[:,103]\n",
+    "regr_clf_2 = linear_model.LinearRegression()\n",
+    "regr_clf_2.fit(X_regr_train,y_regr_train.astype(int))\n",
+    "print(\"Mean squared error when training set and testing set are same : %.2f\"\n",
+    "      % np.mean((regr_clf_2.predict(X_regr_train) - y_regr_train) ** 2))\n",
+    "\n",
+    "regr_coef = []\n",
+    "regr_coef = regr_clf.coef_\n",
+    "coef_dict = {}\n",
+    "for i in range(0,len(regr_coef)):\n",
+    "    coef_dict[regr_coef[i]] = i\n",
+    "coef_val_dec = sorted(coef_dict.keys(),reverse=True)\n",
+    "print('\\n Most predictive features: \\n')\n",
+    "count = 0;\n",
+    "index_list_1 = []\n",
+    "for each in coef_val_dec:\n",
+    "    if(count == 10):\n",
+    "        break\n",
+    "    count += 1\n",
+    "    index_list_1.append(coef_dict[each])\n",
+    "for each in index_list_1:\n",
+    "    print(header_list[each+3])\n",
+    "\n",
+    "coef_val_asc = sorted(coef_dict.keys())\n",
+    "print('\\nLeast predictive features: \\n')\n",
+    "count = 0\n",
+    "index_list_2 = []\n",
+    "for each in coef_val_asc:\n",
+    "    if(count == 10):\n",
+    "        break\n",
+    "    count += 1\n",
+    "    index_list_2.append(coef_dict[each])\n",
+    "for each in index_list_2:\n",
+    "    print(header_list[each+3])\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 56,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Mean squared error for 10 fold cross validation: 0.04\n",
+      "Best Alpha : 10.0 \n",
+      "\n",
+      "Mean squared error when training set and testing set are same : 0.02\n",
+      "Best Alpha :  1.0 \n",
+      "\n"
+     ]
+    }
+   ],
+   "source": [
+    "#3.b.1)\n",
+    "\n",
+    "from sklearn import linear_model \n",
+    "\n",
+    "ridge_clf = linear_model.RidgeCV(alphas=(10,1.0,0.1,0.01,0.001))\n",
+    "X_CV_train,X_CV_eval,y_CV_train,y_CV_eval = cross_val_split_regr(train_data_clean)\n",
+    "ridge_clf.fit(X = X_CV_train, y = y_CV_train.astype(int))\n",
+    "print(\"Mean squared error for 10 fold cross validation: %.2f\" % np.mean((regr_clf_2.predict(X_CV_eval) - y_CV_eval) ** 2))\n",
+    "print('Best Alpha :', ridge_clf.alpha_,'\\n')\n",
+    "    \n",
+    "\n",
+    "#3.b.2 &3) MSE on the training set (train on all the data then test on it all\n",
+    "X_ridge_train = train_data[:,3:102]\n",
+    "y_ridge_train = train_data[:,103]\n",
+    "ridge_clf_2 = linear_model.RidgeCV(alphas=(10,1.0,0.1,0.01,0.001))\n",
+    "ridge_clf_2.fit(X_ridge_train,y_ridge_train)\n",
+    "print(\"Mean squared error when training set and testing set are same : %.2f\"\n",
+    "      % np.mean((ridge_clf_2.predict(X_ridge_train) - y_ridge_train) ** 2))\n",
+    "print('Best Alpha : ', ridge_clf_2.alpha_,'\\n')\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "#3.b.4\n",
+    "#The model is better if MSE of the model is lower.Hence Ridge is better model Among the Ridge and Linear regression models"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 75,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Mean squared error: 0.15\n"
+     ]
+    }
+   ],
+   "source": [
+    "#3->c\n",
+    "\n",
+    "from sklearn.preprocessing import PolynomialFeatures\n",
+    "\n",
+    "poly_clf = PolynomialFeatures(degree=2)\n",
+    "X_CV_train,X_CV_eval,y_CV_train,y_CV_eval = cross_val_split_regr(train_data_clean)\n",
+    "X_ = poly_clf.fit_transform(X_CV_train)\n",
+    "predict_ = poly_clf.fit_transform(X_CV_eval)\n",
+    "linear_clf = linear_model.LinearRegression()\n",
+    "linear_clf.fit(X_, y_CV_train)\n",
+    "print(\"Mean squared error: %.2f\"\n",
+    "      % np.mean((linear_clf.predict(predict_) - y_CV_eval) ** 2))\n",
+    "\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 59,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Mean squared error when training set and testing set are same : 0.02\n"
+     ]
+    }
+   ],
+   "source": [
+    "#3->c->2 on the training set (train on all the data then test on it all\n",
+    "\n",
+    "linear_clf_2 = linear_model.LinearRegression()\n",
+    "linear_clf_2.fit(X_ridge_train,y_ridge_train)\n",
+    "print(\"Mean squared error when training set and testing set are same : %.2f\"\n",
+    "      % np.mean((ridge_clf_2.predict(X_ridge_train) - y_ridge_train) ** 2))\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 60,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "MSE for linear model is lesser than Quadratic model when degree = 2\n",
+      "\n",
+      "MSE for linear model is greater than Quadratic model when degree = 3 but time complexity wil be more and program is taking more and more time to run\n",
+      "\n",
+      "therefore when degree of the quadratic model is increasing MSE is decreasing\n"
+     ]
+    }
+   ],
+   "source": [
+    "#3->c->3\n",
+    "\n",
+    "print('MSE for linear model is lesser than Quadratic model when degree = 2\\n')\n",
+    "print('MSE for linear model is greater than Quadratic model when degree = 3 but time complexity wil be more and program is taking more and more time to run\\n')\n",
+    "print('therefore when degree of the quadratic model is increasing MSE is decreasing')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 80,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "from sklearn.cross_validation import KFold\n",
+    "\n",
+    "def cross_val_split_full(train_data_full):\n",
+    "    cv = KFold(n=len(train_data_full),  \n",
+    "           n_folds=10) \n",
+    "    fold_accuracy = []\n",
+    "    for train_fold, valid_fold in cv:\n",
+    "        train = train_data_full[train_fold] # Extract train data with cv indices\n",
+    "        valid = train_data_full[valid_fold] # Extract valid data with cv indices\n",
+    "        X_CV_train=train[:,4:125]\n",
+    "        y_CV_train=train[:,127]\n",
+    "        X_CV_eval=valid[:,4:125]\n",
+    "        y_CV_eval=valid[:,127]\n",
+    "    return X_CV_train,X_CV_eval,y_CV_train,y_CV_eval"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 86,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "#Read data from Crime-data-full.csv file and add HighCrime column based on ViolentCrimesperPop column\n",
+    "data_input_full = pd.read_csv('/Users/ani/Desktop/ML/Homework_Project/Crime Prediction Data 2/communities-crime-full.csv')\n",
+    "data_frame_full_data = pd.DataFrame(data_input_full)\n",
+    "data_frame_full_data['HighCrime'] = np.where(data_frame_full_data['ViolentCrimesPerPop'] > 0.1,True,False)\n",
+    "del data_frame_full_data['communityname']\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 88,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Cross val score:  [ 0.73888889  0.76111111  0.74444444  0.78333333  0.78888889  0.75555556\n",
+      "  0.71666667  0.75418994  0.78651685  0.76404494] \n",
+      "\n",
+      "Accuracy is :: \n",
+      "\n",
+      "0.723618090452 \n",
+      "\n",
+      "\n",
+      " Confusion Matrix is:\n",
+      "\n",
+      "[[ 42  24]\n",
+      " [ 31 102]] \n",
+      "\n",
+      "\n",
+      " Classification report is:\n",
+      "\n",
+      "             precision    recall  f1-score   support\n",
+      "\n",
+      "          0       0.58      0.64      0.60        66\n",
+      "          1       0.81      0.77      0.79       133\n",
+      "\n",
+      "avg / total       0.73      0.72      0.73       199\n",
+      " \n",
+      "\n",
+      "\n",
+      "For Clean DataSet Decision Tree Accuracy is :: 0.718592964824\n",
+      "For Full DataSet Decision Tree Accuracy is :: 0.723618090452\n",
+      "\n",
+      "Therefore Accuracy is better for  Full data set in Decision Trees\n"
+     ]
+    }
+   ],
+   "source": [
+    "#4.DirtyData\n",
+    "from sklearn.preprocessing import Imputer\n",
+    "\n",
+    "colums_with_missing_vlaues = ['county','community','OtherPerCap','LemasSwornFT','LemasSwFTPerPop','LemasSwFTFieldOps','LemasSwFTFieldPerPop','LemasTotalReq','LemasTotReqPerPop','PolicReqPerOffic','PolicPerPop','RacialMatchCommPol','PctPolicWhite','PctPolicBlack','PctPolicHisp','PctPolicAsian','PctPolicMinor','OfficAssgnDrugUnits','NumKindsDrugsSeiz','PolicAveOTWorked','PolicCars','PolicOperBudg','LemasPctPolicOnPatr','LemasGangUnitDeploy','PolicBudgPerPop']\n",
+    "#data_frame_full_rev = data_frame_full_data\n",
+    "#print(data_frame_full_rev)\n",
+    "for value in colums_with_missing_vlaues:\n",
+    "    data_frame_full_data[value].replace(['?'], ['NaN'], inplace='True')\n",
+    "\n",
+    "imp = Imputer(missing_values='NaN', strategy = 'mean', axis=0)\n",
+    "x = pd.DataFrame(data_frame_full_data.values[:,:].astype(float))\n",
+    "imp.fit(x)\n",
+    "dataset_replaced_values = pd.DataFrame(imp.transform(x))\n",
+    "\n",
+    "train_data_full = dataset_replaced_values.values\n",
+    "\n",
+    "X_CV_train,X_CV_eval,y_CV_train,y_CV_eval = cross_val_split_full(train_data_full)\n",
+    "\n",
+    "dirtydata_clf = tree.DecisionTreeClassifier()\n",
+    "\n",
+    "dirtydata_clf.fit(X_CV_train,y_CV_train.astype(int))\n",
+    "DT_full_acc = find_accuracy_CV(X_CV_train,X_CV_eval,y_CV_train,y_CV_eval,dirtydata_clf)\n",
+    "\n",
+    "print('\\nFor Clean DataSet Decision Tree Accuracy is ::', DT_acc)\n",
+    "print('For Full DataSet Decision Tree Accuracy is ::', DT_full_acc)\n",
+    "print('\\nTherefore Accuracy is better for  Full data set in Decision Trees')\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "#4.a\n",
+    "#From the above result CV results are better as accuracy is more for full data set.\n",
+    "#Missing values effects badly on accuracy of the model.Hence we need to replace missing values by Imputation strategy."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 93,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "def cross_val_split_full_regr(train_data_full):\n",
+    "    cv = KFold(n=len(train_data_full),  \n",
+    "           n_folds=10) \n",
+    "    fold_accuracy = []\n",
+    "    for train_fold, valid_fold in cv:\n",
+    "        train = train_data_full[train_fold] # Extract train data with cv indices\n",
+    "        valid = train_data_full[valid_fold] # Extract valid data with cv indices\n",
+    "        X_CV_train=train[:,3:125]\n",
+    "        y_CV_train=train[:,126]\n",
+    "        X_CV_eval=valid[:,3:125]\n",
+    "        y_CV_eval=valid[:,126]\n",
+    "    return X_CV_train,X_CV_eval,y_CV_train,y_CV_eval    \n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 94,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "#best features for clean dataset\n",
+    "def find_features_non_linear_svm(clf,data_input,w):\n",
+    "    #w = clf.support_vectors_\n",
+    "    list_a = w[0]\n",
+    "    header_list = list(data_input)\n",
+    "    svm_clean_dict = {}\n",
+    "    for i in range(0,len(list_a)):\n",
+    "        svm_clean_dict[list_a[i]] = i\n",
+    "    svm_sorted_values = sorted(svm_clean_dict.keys(),reverse=True)\n",
+    "    count = 0\n",
+    "    index_list = []\n",
+    "    for each in svm_sorted_values:\n",
+    "        if count == 10:\n",
+    "            break;\n",
+    "        count += 1\n",
+    "        index_list.append(header_list[svm_clean_dict[each]+3])\n",
+    "    print(index_list)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 96,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Cross val score:  [ 0.74444444  0.9         0.83888889  0.87222222  0.78333333  0.72777778\n",
+      "  0.69273743  0.81564246  0.85955056  0.82022472] \n",
+      "\n",
+      "Accuracy is :: \n",
+      "\n",
+      "0.758793969849 \n",
+      "\n",
+      "\n",
+      " Confusion Matrix is:\n",
+      "\n",
+      "[[69 38]\n",
+      " [10 82]] \n",
+      "\n",
+      "\n",
+      " Classification report is:\n",
+      "\n",
+      "             precision    recall  f1-score   support\n",
+      "\n",
+      "          0       0.87      0.64      0.74       107\n",
+      "          1       0.68      0.89      0.77        92\n",
+      "\n",
+      "avg / total       0.79      0.76      0.76       199\n",
+      " \n",
+      "\n",
+      "['pctUrban', 'PctSpeakEnglOnly', 'PctHousOccup', 'MedYrHousBuilt', 'PctHousOwnOcc', 'PctFam2Par', 'PctKids2Par', 'pctWWage', 'PctBornSameState', 'PctEmploy']\n"
+     ]
+    }
+   ],
+   "source": [
+    "#Teams \n",
+    "#a.\tIf you are working in a team of two people:\n",
+    "#i.\tExperiment with two learning methods other than those described above \n",
+    "#(one can be a non-linear kernel for SVM) for the classification problem, explaining clearly what you did. \n",
+    "#Show CV results for both the clean and full datasets.\n",
+    "\n",
+    "\n",
+    "#non linear svm for clean dataset\n",
+    "from sklearn import  svm\n",
+    "\n",
+    "X_CV_train,X_CV_eval,y_CV_train,y_CV_eval = cross_val_split_2(train_data_clean)\n",
+    "\n",
+    "non_linear_svm_clean_clf=svm.SVC(kernel='rbf')\n",
+    "non_linear_svm_clean_clf.fit(X_CV_train, y_CV_train.astype(int))\n",
+    "find_accuracy_CV(X_CV_train,X_CV_eval,y_CV_train,y_CV_eval,non_linear_svm_clean_clf)\n",
+    "w = non_linear_svm_clean_clf.support_vectors_\n",
+    "find_features_non_linear_svm(non_linear_svm_clean_clf,data_input,w)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 101,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Cross val score:  [ 0.82777778  0.81666667  0.83888889  0.81666667  0.83333333  0.84444444\n",
+      "  0.83888889  0.79888268  0.8258427   0.8258427 ] \n",
+      "\n",
+      "Accuracy is :: \n",
+      "\n",
+      "0.819095477387 \n",
+      "\n",
+      "\n",
+      " Confusion Matrix is:\n",
+      "\n",
+      "[[ 49  17]\n",
+      " [ 19 114]] \n",
+      "\n",
+      "\n",
+      " Classification report is:\n",
+      "\n",
+      "             precision    recall  f1-score   support\n",
+      "\n",
+      "          0       0.72      0.74      0.73        66\n",
+      "          1       0.87      0.86      0.86       133\n",
+      "\n",
+      "avg / total       0.82      0.82      0.82       199\n",
+      " \n",
+      "\n",
+      "['racepctblack', 'LemasSwFTPerPop', 'PctSameHouse85', 'HousVacant', 'indianPerCap', 'PctSameCity85', 'PctForeignBorn', 'PctKids2Par', 'PctBornSameState', 'PctYoungKids2Par']\n"
+     ]
+    }
+   ],
+   "source": [
+    "#non linear svm for Full dataset\n",
+    "from sklearn import  svm\n",
+    "non_linear_svm_full_clf=svm.SVC(kernel='rbf')\n",
+    "X_CV_train,X_CV_eval,y_CV_train,y_CV_eval = cross_val_split_full(train_data_full)\n",
+    "non_linear_svm_full_clf.fit(X_CV_train, y_CV_train.astype(int))\n",
+    "find_accuracy_CV(X_CV_train,X_CV_eval,y_CV_train,y_CV_eval,non_linear_svm_full_clf)\n",
+    "w = non_linear_svm_full_clf.support_vectors_\n",
+    "find_features_non_linear_svm(non_linear_svm_full_clf,data_input_full,w)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 104,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Cross val score:  [ 0.72777778  0.9         0.75555556  0.82222222  0.68888889  0.60555556\n",
+      "  0.70949721  0.82681564  0.88764045  0.69662921] \n",
+      "\n",
+      "Accuracy is :: \n",
+      "\n",
+      "0.763819095477 \n",
+      "\n",
+      "\n",
+      " Confusion Matrix is:\n",
+      "\n",
+      "[[68 39]\n",
+      " [ 8 84]] \n",
+      "\n",
+      "\n",
+      " Classification report is:\n",
+      "\n",
+      "             precision    recall  f1-score   support\n",
+      "\n",
+      "          0       0.89      0.64      0.74       107\n",
+      "          1       0.68      0.91      0.78        92\n",
+      "\n",
+      "avg / total       0.80      0.76      0.76       199\n",
+      " \n",
+      "\n",
+      "['racepctblack', 'PctIlleg', 'HousVacant', 'MalePctDivorce', 'PctSameCity85', 'MedOwnCostPctInc', 'TotalPctDiv', 'racePctHisp', 'PctPersDenseHous', 'agePct65up']\n"
+     ]
+    }
+   ],
+   "source": [
+    "#SGD Classifier using clean data\n",
+    "\n",
+    "from sklearn.linear_model import SGDClassifier\n",
+    "SGD_clean_clf = SGDClassifier(loss=\"hinge\", penalty=\"l2\")\n",
+    "X_CV_train,X_CV_eval,y_CV_train,y_CV_eval = cross_val_split_2(train_data_clean)\n",
+    "SGD_clean_clf.fit(X_CV_train,y_CV_train.astype(int))\n",
+    "find_accuracy_CV(X_CV_train,X_CV_eval,y_CV_train,y_CV_eval,SGD_clean_clf)\n",
+    "w = SGD_clean_clf.coef_\n",
+    "find_features_non_linear_svm(SGD_clean_clf,data_input,w)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 105,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Cross val score:  [ 0.70555556  0.72777778  0.82777778  0.78888889  0.83333333  0.80555556\n",
+      "  0.71666667  0.82681564  0.73595506  0.79775281] \n",
+      "\n",
+      "Accuracy is :: \n",
+      "\n",
+      "0.814070351759 \n",
+      "\n",
+      "\n",
+      " Confusion Matrix is:\n",
+      "\n",
+      "[[ 45  21]\n",
+      " [ 16 117]] \n",
+      "\n",
+      "\n",
+      " Classification report is:\n",
+      "\n",
+      "             precision    recall  f1-score   support\n",
+      "\n",
+      "          0       0.74      0.68      0.71        66\n",
+      "          1       0.85      0.88      0.86       133\n",
+      "\n",
+      "avg / total       0.81      0.81      0.81       199\n",
+      " \n",
+      "\n",
+      "['householdsize', 'NumIlleg', 'MedNumBR', 'PctOccupMgmtProf', 'PctSameHouse85', 'MedRentPctHousInc', 'FemalePctDiv', 'racePctAsian', 'PctPersOwnOccup', 'agePct16t24']\n"
+     ]
+    }
+   ],
+   "source": [
+    "#SGD Classifier using full data\n",
+    "\n",
+    "SGD_full_clf = SGDClassifier(loss=\"hinge\", penalty=\"l2\")\n",
+    "X_CV_train,X_CV_eval,y_CV_train,y_CV_eval = cross_val_split_full(train_data_full)\n",
+    "SGD_full_clf.fit(X_CV_train, y_CV_train.astype(int))\n",
+    "find_accuracy(X_CV_train,X_CV_eval,y_CV_train,y_CV_eval,SGD_full_clf)\n",
+    "w = SGD_clean_clf.coef_\n",
+    "find_features_non_linear_svm(SGD_full_clf,data_input_full,w)\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 106,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "import statistics\n",
+    "\n",
+    "def find_mean_median_mode(arr):\n",
+    "    #arr = data_input.values[:,103]\n",
+    "    list_mean_mode_median = []\n",
+    "    list_mean_mode_median.append(np.mean(arr))\n",
+    "    list_mean_mode_median.append(np.median(arr))\n",
+    "    list_mean_mode_median.append(mode(arr))\n",
+    "    return list_mean_mode_median\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 109,
+   "metadata": {
+    "collapsed": false,
+    "scrolled": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Cross val score:  [ 0.97237569  0.97222222  0.97222222  0.88826816  0.97765363  0.97765363\n",
+      "  0.97765363  0.98324022  0.97765363  0.97765363] \n",
+      "\n",
+      "Accuracy is :: \n",
+      "\n",
+      "0.819095477387 \n",
+      "\n",
+      "\n",
+      " Confusion Matrix is:\n",
+      "\n",
+      "[[163  35]\n",
+      " [  1   0]] \n",
+      "\n",
+      "\n",
+      " Classification report is:\n",
+      "\n",
+      "             precision    recall  f1-score   support\n",
+      "\n",
+      "          0       0.99      0.82      0.90       198\n",
+      "          1       0.00      0.00      0.00         1\n",
+      "\n",
+      "avg / total       0.99      0.82      0.90       199\n",
+      " \n",
+      "\n",
+      "Maximum accuracy threshold for Decistion Tree :  0.99  Maximum accuracy:  0.989949748744\n",
+      "Maximum accuracy  0.91959798995\n",
+      "Maximum accuracy  0.819095477387\n"
+     ]
+    }
+   ],
+   "source": [
+    "# 5.b\n",
+    "#ii.\tDevise a method to find the most useful threshold for dividing high crime areas from low crime areas (i.e., discretizing XXX to compute highCrime). Define clearly what you mean by “useful”.\n",
+    "#iii.\tShow CV results for both the clean and full datasets for at least three different classification methods above.\n",
+    "#iv.\tHow are these results similar and different from the previous results (with a fixed threshold of 0.1). What does this say about how to approach such a problem.\n",
+    "\n",
+    "\n",
+    "#clean data\n",
+    "\n",
+    "#arr = data_input.values[:,103]\n",
+    "#list_mean_median_mode = find_mean_median_mode(arr)\n",
+    "#data_frame_c = data_frame\n",
+    "#print(list_mean_median_mode)\n",
+    "val = 0.01\n",
+    "acc = 0.0\n",
+    "DT_max_acc = 0.0\n",
+    "DT_max_val = 0.0\n",
+    "GD_max_acc = 0.0\n",
+    "GD_max_val = 0.0\n",
+    "SVC_max_acc = 0.0\n",
+    "SVC_max_val = 0.0\n",
+    "while val < 1.0:\n",
+    "    data_frame_c = pd.DataFrame(data_input)\n",
+    "    data_frame_c['HighCrime'] = np.where(data_frame_c['ViolentCrimesPerPop'] > val,True,False)\n",
+    "    #print(data_frame_c['HighCrime'])\n",
+    "    train_data_clean_1 = data_frame_c.values\n",
+    "    X_CV_train,X_CV_eval,y_CV_train,y_CV_eval = cross_val_split_2(train_data_clean_1)\n",
+    "    \n",
+    "    #Decision Tree classfier\n",
+    "    DTree_clf=tree.DecisionTreeClassifier()\n",
+    "    DTree_clf.fit(X_CV_train,y_CV_train.astype(int))\n",
+    "    acc = find_accuracy_2(X_CV_train,X_CV_eval,y_CV_train,y_CV_eval,DTree_clf)\n",
+    "    if acc > DT_max_acc:\n",
+    "        DT_max_val = val\n",
+    "        DT_max_acc = acc\n",
+    "    del data_frame_c['HighCrime']\n",
+    "    train_data_clean_1 = []\n",
+    "    val += 0.02\n",
+    "\n",
+    "#GaussianNB classfier\n",
+    "data_frame_c['HighCrime'] = np.where(data_frame_c['ViolentCrimesPerPop'] > DT_max_val,True,False)\n",
+    "train_data_clean_1 = data_frame_c.values\n",
+    "\n",
+    "X_CV_train,X_CV_eval,y_CV_train,y_CV_eval = cross_val_split_2(train_data_clean_1)\n",
+    "\n",
+    "Gaussian_clf_1 = GaussianNB()\n",
+    "Gaussian_clf_1.fit(X_CV_train,y_CV_train.astype(int))\n",
+    "GD_max_acc = find_accuracy_2(X_CV_train,X_CV_eval,y_CV_train,y_CV_eval,Gaussian_clf_1)\n",
+    "\n",
+    "#SGD Classifier\n",
+    "SGD_clean_clf1 = SGDClassifier(loss=\"hinge\", penalty=\"l2\")\n",
+    "SGD_clean_clf1.fit(X_CV_train,y_CV_train.astype(int))\n",
+    "SGD_max_acc=find_accuracy_CV(X_CV_train,X_CV_eval,y_CV_train,y_CV_eval,SGD_clean_clf1)\n",
+    "\n",
+    "    \n",
+    "print('Maximum accuracy threshold for Decistion Tree : ',round(DT_max_val,2), ' Maximum accuracy: ', DT_max_acc)\n",
+    "print('Maximum accuracy ', GD_max_acc)\n",
+    "print('Maximum accuracy ', SGD_max_acc)\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 110,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Cross val score:  [ 0.97237569  0.97237569  0.97222222  0.93296089  0.97206704  0.97765363\n",
+      "  0.97206704  0.97765363  0.94413408  0.97765363] \n",
+      "\n",
+      "Accuracy is :: \n",
+      "\n",
+      "0.979899497487 \n",
+      "\n",
+      "\n",
+      " Confusion Matrix is:\n",
+      "\n",
+      "[[194   3]\n",
+      " [  1   1]] \n",
+      "\n",
+      "\n",
+      " Classification report is:\n",
+      "\n",
+      "             precision    recall  f1-score   support\n",
+      "\n",
+      "          0       0.99      0.98      0.99       197\n",
+      "          1       0.25      0.50      0.33         2\n",
+      "\n",
+      "avg / total       0.99      0.98      0.98       199\n",
+      " \n",
+      "\n",
+      "Maximum accuracy threshold for Decistion Tree :  0.97  Maximum accuracy:  0.989949748744\n",
+      "Maximum accuracy :  0.899497487437\n",
+      "Maximum accuracy :  0.979899497487\n"
+     ]
+    }
+   ],
+   "source": [
+    "#full Data\n",
+    "val_full = 0.01\n",
+    "acc_full = 0.0\n",
+    "DT_max_acc_full = 0.0\n",
+    "DT_max_val_full = 0.0\n",
+    "GD_max_acc_full = 0.0\n",
+    "GD_max_val_full = 0.0\n",
+    "SVC_max_acc_full = 0.0\n",
+    "SVC_max_val_full = 0.0\n",
+    "while val_full < 1.0:\n",
+    "    data_frame_full_data = pd.DataFrame(data_input_full)\n",
+    "    data_frame_full_data['HighCrime'] = np.where(data_frame_full_data['ViolentCrimesPerPop'] > val_full,True,False)\n",
+    "    #del data_frame_full_data['communityname']\n",
+    "    for value in colums_with_missing_vlaues:\n",
+    "        data_frame_full_data[value].replace(['?'], ['NaN'], inplace='True')\n",
+    "\n",
+    "    imp = Imputer(missing_values='NaN', strategy = 'mean', axis=0)\n",
+    "    x = pd.DataFrame(data_frame_full_data.values[:,:].astype(float))\n",
+    "    imp.fit(x)\n",
+    "    dataset_replaced_values = pd.DataFrame(imp.transform(x))\n",
+    "\n",
+    "    train_data_full_1 = dataset_replaced_values.values\n",
+    "\n",
+    "    \n",
+    "    \n",
+    "    X_CV_train,X_CV_eval,y_CV_train,y_CV_eval = cross_val_split_full(train_data_full_1)\n",
+    "    \n",
+    "    #Decision Tree classfier\n",
+    "    DTree_clf_full=tree.DecisionTreeClassifier()\n",
+    "    DTree_clf_full.fit(X_CV_train,y_CV_train)\n",
+    "    acc_full = find_accuracy_2(X_CV_train,X_CV_eval,y_CV_train,y_CV_eval,DTree_clf_full)\n",
+    "    if acc_full > DT_max_acc_full:\n",
+    "        DT_max_val_full = val_full\n",
+    "        DT_max_acc_full = acc_full\n",
+    "    val_full += 0.02\n",
+    "    \n",
+    "#GaussianNB classfier\n",
+    "Gaussian_clf_full_1 = GaussianNB()\n",
+    "Gaussian_clf_full_1.fit(X_CV_train,y_CV_train.astype(int))\n",
+    "GD_max_acc_full = find_accuracy_2(X_CV_train,X_CV_eval,y_CV_train,y_CV_eval,Gaussian_clf_full_1)\n",
+    "\n",
+    "#SGD Classifier\n",
+    "SGD_full_clf2 = SGDClassifier(loss=\"hinge\", penalty=\"l2\")\n",
+    "SGD_full_clf2.fit(X_CV_train,y_CV_train.astype(int))\n",
+    "SGD_max_acc_full=find_accuracy_CV(X_CV_train,X_CV_eval,y_CV_train,y_CV_eval,SGD_full_clf2)\n",
+    "    \n",
+    "print('Maximum accuracy threshold for Decistion Tree : ',round(DT_max_val_full,2), ' Maximum accuracy: ', DT_max_acc_full)\n",
+    "print('Maximum accuracy : ', GD_max_acc_full)\n",
+    "print('Maximum accuracy : ', SGD_max_acc_full)\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 116,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Accuracy of random forest classifier:\n",
+      "\n",
+      "Cross val score:  [ 0.76111111  0.91666667  0.85555556  0.84444444  0.79444444  0.68888889\n",
+      "  0.74301676  0.82122905  0.82022472  0.84269663] \n",
+      "\n",
+      "Accuracy is :: \n",
+      "\n",
+      "0.804020100503 \n",
+      "\n",
+      "\n",
+      " Confusion Matrix is:\n",
+      "\n",
+      "[[79 28]\n",
+      " [11 81]] \n",
+      "\n",
+      "\n",
+      " Classification report is:\n",
+      "\n",
+      "             precision    recall  f1-score   support\n",
+      "\n",
+      "          0       0.88      0.74      0.80       107\n",
+      "          1       0.74      0.88      0.81        92\n",
+      "\n",
+      "avg / total       0.82      0.80      0.80       199\n",
+      " \n",
+      "\n",
+      "Accuracy of Gradient Boosting classifier:\n",
+      "\n",
+      "Cross val score:  [ 0.72222222  0.80555556  0.81666667  0.83888889  0.75        0.68333333\n",
+      "  0.68715084  0.78212291  0.82022472  0.80898876] \n",
+      "\n",
+      "Accuracy is :: \n",
+      "\n",
+      "0.819095477387 \n",
+      "\n",
+      "\n",
+      " Confusion Matrix is:\n",
+      "\n",
+      "[[83 24]\n",
+      " [12 80]] \n",
+      "\n",
+      "\n",
+      " Classification report is:\n",
+      "\n",
+      "             precision    recall  f1-score   support\n",
+      "\n",
+      "          0       0.87      0.78      0.82       107\n",
+      "          1       0.77      0.87      0.82        92\n",
+      "\n",
+      "avg / total       0.83      0.82      0.82       199\n",
+      " \n",
+      "\n",
+      "Accuracy of Polynomial SVM classifier:\n",
+      "\n",
+      "Cross val score:  [ 0.76111111  0.83888889  0.76111111  0.86666667  0.82777778  0.75\n",
+      "  0.65921788  0.75977654  0.83146067  0.7247191 ] \n",
+      "\n",
+      "Accuracy is :: \n",
+      "\n",
+      "0.638190954774 \n",
+      "\n",
+      "\n",
+      " Confusion Matrix is:\n",
+      "\n",
+      "[[37 70]\n",
+      " [ 2 90]] \n",
+      "\n",
+      "\n",
+      " Classification report is:\n",
+      "\n",
+      "             precision    recall  f1-score   support\n",
+      "\n",
+      "          0       0.95      0.35      0.51       107\n",
+      "          1       0.56      0.98      0.71        92\n",
+      "\n",
+      "avg / total       0.77      0.64      0.60       199\n",
+      " \n",
+      "\n"
+     ]
+    }
+   ],
+   "source": [
+    "#Extra Credit\n",
+    "\n",
+    "\n",
+    "#clean data: polynomial  SVM, decision forests, Gradient Boosting Classifier,\n",
+    "\n",
+    "from sklearn.ensemble import RandomForestClassifier #use RandomForestRegressor for regression problem\n",
+    "from sklearn.calibration import CalibratedClassifierCV\n",
+    "from sklearn.metrics import log_loss\n",
+    "\n",
+    "# Create Random Forest object\n",
+    "random_forest_clf = RandomForestClassifier(n_estimators=1000)\n",
+    "X_CV_train,X_CV_eval,y_CV_train,y_CV_eval = cross_val_split_2(train_data_clean)\n",
+    "# Train the model using the training sets and check score\n",
+    "random_forest_clf.fit(X_CV_train, y_CV_train.astype(int))\n",
+    "#Predict Output\n",
+    "predicted= random_forest_clf.predict(X_CV_eval)\n",
+    "#score = log_loss(y_CV_eval, predicted)\n",
+    "print('Accuracy of random forest classifier:\\n')\n",
+    "find_accuracy(X_CV_train,X_CV_eval,y_CV_train,y_CV_eval,random_forest_clf)\n",
+    "\n",
+    "\n",
+    "#import GradientBoosting Classifier\n",
+    "from sklearn.ensemble import GradientBoostingClassifier\n",
+    "#split given data set into X_CV_train,X_CV_eval,y_CV_train,y_CV_eval\n",
+    "X_CV_train,X_CV_eval,y_CV_train,y_CV_eval = cross_val_split_2(train_data_clean)\n",
+    "#intantiate Gradient boosting classifier\n",
+    "Gradient_clf = GradientBoostingClassifier(n_estimators=25, learning_rate=1.0, max_depth=1)\n",
+    "#fit the train data to model\n",
+    "Gradient_clf.fit(X_CV_train, y_CV_train.astype(int))\n",
+    "print('Accuracy of Gradient Boosting classifier:\\n')\n",
+    "#measuring the accuracy of the Gradient Boosting model\n",
+    "find_accuracy(X_CV_train,X_CV_eval,y_CV_train,y_CV_eval,Gradient_clf)\n",
+    "\n",
+    "\n",
+    "#import SVM Classifier from sklearn\n",
+    "from sklearn import  svm\n",
+    "X_CV_train,X_CV_eval,y_CV_train,y_CV_eval = cross_val_split_2(train_data_clean)\n",
+    "#intantiate SVM classifier\n",
+    "clf_svm = svm.SVC(kernel='poly', degree=2, C=1.0)\n",
+    "#fit the train data to model\n",
+    "clf_svm.fit(X_CV_train, y_CV_train.astype(int))\n",
+    "print('Accuracy of Polynomial SVM classifier:\\n')\n",
+    "#measuring the accuracy of the Gradient Boosting model\n",
+    "find_accuracy(X_CV_train,X_CV_eval,y_CV_train,y_CV_eval,clf_svm)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "#Full data \n",
+    "#Full data: polynomial  SVM, decision forests, Gradient Boosting Classifier,\n",
+    "\n",
+    "# Create Random Forest object\n",
+    "random_forest_clf = RandomForestClassifier(n_estimators=1000)\n",
+    "X_CV_train,X_CV_eval,y_CV_train,y_CV_eval = cross_val_split_full(train_data_full)\n",
+    "# Train the model using the training sets and check score\n",
+    "random_forest_clf.fit(X_CV_train, y_CV_train.astype(int))\n",
+    "#Predict Output\n",
+    "predicted= random_forest_clf.predict(X_CV_eval)\n",
+    "#find accuracy of the model\n",
+    "find_accuracy(X_CV_train,X_CV_eval,y_CV_train,y_CV_eval,random_forest_clf)\n",
+    "\n",
+    "\n",
+    "\n",
+    "from sklearn.ensemble import GradientBoostingClassifier\n",
+    "X_CV_train,X_CV_eval,y_CV_train,y_CV_eval = cross_val_split_full(train_data_full)\n",
+    "Gradient_clf = GradientBoostingClassifier(n_estimators=25, learning_rate=1.0, max_depth=1)\n",
+    "Gradient_clf.fit(X_CV_train, y_CV_train.astype(int))\n",
+    "find_accuracy(X_CV_train,X_CV_eval,y_CV_train,y_CV_eval,Gradient_clf)\n",
+    "\n",
+    "\n",
+    "#import SVM from sklearn\n",
+    "from sklearn import  svm\n",
+    "#split train data into X_CV_train,X_CV_eval,y_CV_train,y_CV_eval\n",
+    "X_CV_train,X_CV_eval,y_CV_train,y_CV_eval = cross_val_split_full(train_data_full)\n",
+    "#intantiate SVM classifier\n",
+    "clf_svm = svm.SVC(kernel='poly', degree=2, C=1.0)\n",
+    "#train model with train data\n",
+    "clf_svm.fit(X_CV_train, y_CV_train.astype(int))\n",
+    "\n",
+    "#find accuracy of the model\n",
+    "find_accuracy(X_CV_train,X_CV_eval,y_CV_train,y_CV_eval,clf_svm)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": []
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python [Root]",
+   "language": "python",
+   "name": "Python [Root]"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.5.2"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 2
+}
